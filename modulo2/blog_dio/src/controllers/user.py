@@ -54,8 +54,8 @@ def _list_create_user():
 
 # BUSCAR USUARIO ID
 @app.route("/<int:user_id>", methods=["GET"])
-@jwt_required()
-@requires_role("admin")
+# @jwt_required()
+# @requires_role("admin")
 def get_user_id(user_id):
     user = db.get_or_404(User, user_id)
     return {

@@ -17,3 +17,7 @@ def requires_role(role_name):
         return wrapped
 
     return decorator
+
+
+def aoquadrado(x):
+    return x**2

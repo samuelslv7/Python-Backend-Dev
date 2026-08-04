@@ -458,9 +458,151 @@ def perfil():
 
 
 
-### Curso 2.5 - Teste
+
+### Curso 2.5 - Testes Automatizados e Conceitos Avançados
+#### O que são testes unitários e testes de integração
+
+Os testes automatizados garantem a confiabilidade e a qualidade do software à medida que o código evolui.
+
+* **Testes Unitários (Unit Tests):**
+* **Foco:** Testam a menor unidade isolada de código possível (geralmente uma função, um método ou uma classe individual).
+* **Características:** São extremamente rápidos, determinísticos e não devem depender de recursos externos (banco de dados, rede, sistema de arquivos ou APIs de terceiros).
+* *Exemplo:* Testar se uma função de cálculo de juros retorna o valor correto com base em entradas específicas.
 
 
+* **Testes de Integração (Integration Tests):**
+* **Foco:** Validam a comunicação e o funcionamento conjunto entre múltiplos componentes ou módulos do sistema.
+* **Características:** Verificam se diferentes partes integradas do sistema funcionam corretamente juntas. Podem interagir com recursos reais ou emulados (como um banco de dados de testes SQLite em memória).
+* *Exemplo:* Testar a requisição de um endpoint `POST /login` enviando credenciais, verificando a consulta ao banco de dados e validando o token JWT retornado na resposta HTTP.
+
+---
+
+#### O que é o Pytest
+
+O **Pytest** é o framework de testes mais popular do ecossistema Python. Ele simplifica a escrita de testes em comparação ao módulo nativo `unittest`, reduzindo o boilerplate de código e oferecendo recursos avançados.
+
+* **Sintaxe Limpa:** Utiliza a instrução nativa `assert` do Python em vez de métodos como `self.assertEqual()`.
+* **Descoberta Automática de Testes:** Localiza automaticamente arquivos nomeados como `test_*.py` ou `*_test.py` e funções que começam com `test_`.
+* **Fixtures (`@pytest.fixture`):** Mecanismo poderoso para criar contextos reutilizáveis de teste (ex: instanciar uma aplicação Flask, preparar um banco de dados temporário ou autenticar um usuário).
+
+```python
+# Exemplo simples com Pytest
+def somar(a, b):
+    return a + b
+
+def test_somar():
+    assert somar(2, 3) == 5
+
+```
+
+---
+
+#### O que é mockar
+
+**Mockar (Mocking)** é o ato de substituir dependências reais ou externas de um sistema por objetos simulados (**Mocks**) que imitam o comportamento dos componentes originais de forma controlada.
+
+* **Por que mockar?**
+* Evita chamadas externas reais em testes (ex: enviar e-mails reais, cobrar cartões de crédito ou consumir APIs pagas).
+* Isola a unidade de código sob teste de falhas externas.
+* Aumenta drasticamente a velocidade de execução da suíte de testes.
+
+
+* **Ferramentas:** No Python, utiliza-se o módulo nativo `unittest.mock` (com as ferramentas `Mock`, `MagicMock` e o decorator `@patch`) ou extensões do Pytest como o `pytest-mock`.
+
+```python
+from unittest.mock import patch
+
+# Exemplo: Mockando uma função de envio de e-mail externa
+@patch("meu_modulo.enviar_email_boas_vindas")
+def test_cadastro_usuario(mock_email):
+    mock_email.return_value = True  # Simula que o e-mail foi enviado com sucesso
+    
+    # Chama a função principal de cadastro
+    status = cadastrar_novo_usuario("usuario@email.com")
+    
+    assert status == "Sucesso"
+    mock_email.assert_called_once_with("usuario@email.com") # Valida que a função foi chamada
+
+```
+
+---
+
+#### O que são função lambda e decorated function
+
+* **Função Lambda (Funções Anônimas):**
+Uma **função lambda** é uma pequena função sem nome, definida em uma única linha de código. Ela é usada para operações simples onde definir uma função formal com `def` seria desnecessariamente verboso.
+* **Sintaxe:** `lambda argumentos: expressao`
+
+
+```python
+# Função tradicional
+def quadrado(x):
+    return x ** 2
+
+# Equivalente com lambda
+quadrado_lambda = lambda x: x ** 2
+
+# Uso comum em ordenações e filtros
+precos = [10.5, 50.0, 5.0, 100.0]
+precos_ordenados = sorted(precos, key=lambda p: p)
+
+```
+
+
+* **Decorated Function (Função Decorada):**
+Uma **decorated function** é qualquer função cuja definição foi envolvida por um ou mais *decorators* usando a sintaxe `@decorator`. A função decorada é passada como parâmetro para o decorator, permitindo a execução de códigos adicionais antes ou depois da função original.
+```python
+# Rota Flask decorada com o gerenciador de rotas e verificação de JWT
+@app.route("/dashboard", methods=["GET"])
+@jwt_required()
+def dashboard():  # <- Esta é a 'decorated function'
+    return {"data": "Acesso autorizado"}
+
+```
+
+
+
+---
+
+#### Padrões de teste
+
+Seguir padrões consolidados ajuda na manutenção e na legibilidade da suíte de testes:
+
+1. **AAA (Arrange, Act, Assert):**
+A estrutura clássica para organização do código dentro de uma função de teste:
+* **Arrange (Preparar):** Configura os dados necessários, variáveis, mocks e estado inicial.
+* **Act (Agir):** Executa a função ou ação específica que está sendo testada.
+* **Assert (Verificar):** Checa se os resultados obtidos coincidem com o comportamento esperado.
+
+
+```python
+def test_calculo_desconto():
+    # Arrange
+    preco_original = 100.0
+    percentual_desconto = 0.15 # 15%
+
+    # Act
+    preco_final = calcular_desconto(preco_original, percentual_desconto)
+
+    # Assert
+    assert preco_final == 85.0
+
+```
+
+
+2. **Gherkin / BDD (Given-When-Then):**
+Padrão conceitual focado em comportamento (Behavior-Driven Development):
+* **Given (Dado que):** O contexto inicial ou pré-condição.
+* **When (Quando):** O evento ou ação disparada pelo usuário/sistema.
+* **Then (Então):** A consequência observável ou saída esperada.
+
+
+3. **Padrão FIRST para Bons Testes:**
+* **F - Fast (Rápido):** A suíte deve rodar em segundos para encorajar execuções frequentes.
+* **I - Independent / Isolated (Independente):** Um teste não deve depender do resultado de outro.
+* **R - Repeatable (Repetível):** O teste deve passar em qualquer ambiente e a qualquer momento.
+* **S - Self-validating (Auto-validável):** O teste passa ou falha claramente (sem necessidade de checar logs manualmente).
+* **T - Timely (Oportuno):** Devem ser escritos junto com o código de produção ou antes dele (TDD).
 
 
 
